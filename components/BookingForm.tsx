@@ -104,8 +104,8 @@ const BookingForm: React.FC = () => {
     localStorage.setItem('simonyo_bookings', JSON.stringify(updatedBookings));
 
     try {
-        // FormSubmit.co integration
-        await fetch("https://formsubmit.co/ajax/pasposip@gmail.com", {
+        // 1. FormSubmit.co integration (Your original email system)
+        const emailPromise = fetch("https://formsubmit.co/ajax/pasposip@gmail.com", {
             method: "POST",
             headers: { 
                 'Content-Type': 'application/json',
@@ -125,9 +125,53 @@ const BookingForm: React.FC = () => {
             })
         });
 
+        // 2. The "Bridge" to your new Admin Dashboard
+        // We calculate a rough price based on the service name for the dashboard
+        let estimatedPrice = 35;
+        if (formData.service.includes('Student')) estimatedPrice = 25;
+        if (formData.service.includes('Beard')) estimatedPrice = 25;
+        if (formData.service.includes('Shave')) estimatedPrice = 30;
+        if (formData.service === 'Vibes Experience') estimatedPrice = 55;
+        if (formData.service === 'Good Vibes Experience') estimatedPrice = 70;
+        if (formData.service.includes('Wax')) estimatedPrice = 8;
+
+        // Calculate end time (assuming 1 hour slots for simplicity on the calendar)
+        const [timeStr, modifier] = formData.time.split(' ');
+        let [hours, minutes] = timeStr.split(':').map(Number);
+        if (modifier === 'PM' && hours < 12) hours += 12;
+        if (modifier === 'AM' && hours === 12) hours = 0;
+        
+        const startTime24 = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        const endTime24 = `${(hours + 1).toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+        const dashboardPromise = fetch("https://ais-pre-edvl43bjtpydafvvuzervp-8583659065.asia-southeast1.run.app/api/bookings", {
+            method: "POST",
+            headers: { 
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                id: Math.random().toString(36).substring(7),
+                customerName: formData.name,
+                customerEmail: formData.email,
+                serviceId: 'external', // Just a placeholder
+                serviceName: formData.service,
+                date: formData.date,
+                startTime: startTime24,
+                endTime: endTime24,
+                status: 'active',
+                type: 'booking',
+                price: estimatedPrice
+            })
+        }).catch(err => console.error("Dashboard sync failed (non-critical)", err));
+
+        // Wait for both to finish
+        await Promise.all([emailPromise, dashboardPromise]);
+
         setStatus('success');
     } catch (error) {
-        console.error("Email submission failed", error);
+        console.error("Submission failed", error);
+        // We still show success to the user so they don't panic, 
+        // but log the error for debugging.
         setStatus('success');
     }
   };
