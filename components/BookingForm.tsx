@@ -142,8 +142,8 @@ const BookingForm: React.FC = () => {
         const startTime24 = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         const endTime24 = `${(hours + 1).toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 
-        // Using the Shared App URL so it works permanently
-        await fetch("https://ais-pre-edvl43bjtpydafvvuzervp-8583659065.asia-southeast1.run.app/api/bookings", {
+        // Using the DEV App URL so it shows up on your screen right now!
+        await fetch("https://ais-dev-edvl43bjtpydafvvuzervp-8583659065.asia-southeast1.run.app/api/bookings", {
             method: "POST",
             headers: { 
                 'Content-Type': 'application/json',
